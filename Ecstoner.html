@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ecstoner</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh; margin: 0; display: grid; place-items: center;
+      overflow: hidden; font-family: Inter, "Segoe UI", system-ui, sans-serif;
+      background: #080714;
+    }
+    body::before, body::after {
+      content: ""; position: fixed; width: 70vmax; height: 70vmax; border-radius: 50%;
+      filter: blur(70px); opacity: .64; z-index: -1;
+      animation: drift 13s ease-in-out infinite alternate;
+    }
+    body::before { background: #8438ff; top: -35vmax; left: -23vmax; }
+    body::after { background: #00d8c5; bottom: -38vmax; right: -23vmax; animation-delay: -6s; }
+    @keyframes drift { to { transform: translate(16vmax, 11vmax) scale(1.17); } }
+    .orb { position: fixed; width: 28rem; height: 28rem; border-radius: 50%; background: #ff4da6; filter: blur(100px); opacity: .32; z-index: -1; animation: float 10s ease-in-out infinite alternate; }
+    @keyframes float { to { transform: translateY(-100px) translateX(-120px); } }
+    main {
+      width: min(92vw, 510px); padding: 42px; border: 1px solid rgba(255,255,255,.23);
+      border-radius: 30px; background: linear-gradient(130deg, rgba(255,255,255,.18), rgba(255,255,255,.06));
+      box-shadow: 0 28px 90px rgba(0,0,0,.42), inset 0 1px rgba(255,255,255,.28);
+      backdrop-filter: blur(24px); text-align: center;
+    }
+    .mark { width: 58px; height: 58px; display: grid; place-items: center; margin: 0 auto 17px; border-radius: 18px; font-size: 28px; background: linear-gradient(135deg,#b597ff,#3bfff0); box-shadow: 0 10px 30px #6c5ce788; }
+    h1 { margin: 0; font-size: 2.15rem; letter-spacing: -.07rem; }
+    p { margin: 10px 0 29px; color: rgba(255,255,255,.72); }
+    label { display: block; text-align: left; margin: 0 0 8px; font-size: .84rem; font-weight: 700; color: #eae5ff; }
+    input { width: 100%; border: 1px solid rgba(255,255,255,.22); border-radius: 14px; padding: 16px 17px; outline: none; font: inherit; color: white; background: rgba(5,4,19,.36); transition: .2s; }
+    input::placeholder { color: #bbb7d0; }
+    input:focus { border-color: #71f7ea; box-shadow: 0 0 0 4px rgba(113,247,234,.16); }
+    button { width: 100%; margin-top: 16px; border: 0; border-radius: 14px; padding: 16px; font: 700 1rem inherit; color: #130a2a; cursor: pointer; background: linear-gradient(100deg,#c2a8ff,#60f5e4); box-shadow: 0 13px 30px rgba(77,239,220,.22); transition: transform .2s, box-shadow .2s; }
+    button:hover { transform: translateY(-2px); box-shadow: 0 17px 37px rgba(77,239,220,.35); }
+    button:active { transform: translateY(0); }
+    button:disabled { cursor: not-allowed; transform: none; color: #827d91; background: #c8c5d0; box-shadow: none; }
+    #status { height: 22px; margin: 17px 0 -22px; color: #85ffdb; font-size: .9rem; opacity: 0; transition: opacity .25s; }
+    #status.visible { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="orb"></div>
+  <main>
+    <div class="mark">✦</div>
+    <h1>Ecstoner</h1>
+    <p>Jesteśmy zaawanasowanym systemem godnym zaufania.</p>
+    <label for="entry">Wpisz tutaj IP</label>
+    <input id="entry" type="text" placeholder="np. 192.168.1.1" autocomplete="off">
+    <button id="send" type="button">Wyślij pakiety</button>
+    <div id="status" role="status">Gotowe — symulacja zakończona.</div>
+  </main>
+  <script>
+    const entry = document.querySelector('#entry');
+    const status = document.querySelector('#status');
+    const send = document.querySelector('#send');
+    const cooldownMs = 5 * 60 * 1000;
+    let cooldownUntil = 0;
+    let timer;
+    const updateCooldown = () => {
+      const secondsLeft = Math.max(0, Math.ceil((cooldownUntil - Date.now()) / 1000));
+      if (!secondsLeft) {
+        clearInterval(timer);
+        send.disabled = false;
+        send.textContent = 'Wyślij pakiety';
+        return;
+      }
+      const minutes = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
+      const seconds = String(secondsLeft % 60).padStart(2, '0');
+      send.textContent = `Odczekaj ${minutes}:${seconds}`;
+    };
+    send.addEventListener('click', () => {
+      const value = entry.value.trim();
+      const isIp = /^(?:25[0-5]|2[0-4]\d|1?\d?\d)\.(?:25[0-5]|2[0-4]\d|1?\d?\d)\.(?:25[0-5]|2[0-4]\d|1?\d?\d)\.(?:25[0-5]|2[0-4]\d|1?\d?\d)$/.test(value);
+      status.textContent = isIp ? 'Sukces! Pakiety wysłane.' : 'Błąd! Nie wysłano pakietów';
+      status.classList.add('visible');
+      if (isIp) {
+        cooldownUntil = Date.now() + cooldownMs;
+        send.disabled = true;
+        updateCooldown();
+        timer = setInterval(updateCooldown, 1000);
+      }
+    });
+    entry.addEventListener('keydown', event => { if (event.key === 'Enter') send.click(); });
+  </script>
+</body>
+</html>
